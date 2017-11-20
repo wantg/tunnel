@@ -11,10 +11,8 @@ const forwardConfigs = {
             username: '',
             password: ''
         },
-        srcHost: '127.0.0.1',
-        srcPort: 27017,
-        dstHost: '127.0.0.1',
-        dstPort: 27017
+        src: { host: '127.0.0.1', port: 27017, },
+        dst: { host: '127.0.0.1', port: 27017 }
     },
     redis: {
         sshConfig: {
@@ -23,10 +21,8 @@ const forwardConfigs = {
             username: '',
             password: ''
         },
-        srcHost: '127.0.0.1',
-        srcPort: 6379,
-        dstHost: '127.0.0.1',
-        dstPort: 6379
+        src: { host: '127.0.0.1', port: 6379, },
+        dst: { host: '127.0.0.1', port: 6379 }
     }
 };
 
@@ -35,10 +31,10 @@ function startService(forwardConfig) {
         const sshConnection = new sshClient();
         sshConnection.on('ready', () => {
             sshConnection.forwardOut(
-                forwardConfig.srcHost,
-                forwardConfig.srcPort,
-                forwardConfig.dstHost,
-                forwardConfig.dstPort,
+                forwardConfig.src.host,
+                forwardConfig.src.port,
+                forwardConfig.dst.host,
+                forwardConfig.dst.port,
                 (err, sshStream) => {
                     if (err) {
                         throw err;
@@ -47,7 +43,7 @@ function startService(forwardConfig) {
                 }
             );
         }).connect(forwardConfig.sshConfig);
-    }).listen(forwardConfig.srcPort, forwardConfig.srcHost, (error, result) => {
+    }).listen(forwardConfig.src.port, forwardConfig.src.host, (error, result) => {
         if (error) {
             console.log(error);
         } else {
