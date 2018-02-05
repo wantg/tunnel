@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"net"
-	"os"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -99,7 +97,6 @@ func main() {
 			fmt.Println(tunnel.Start())
 		}(flag, tunnel)
 	}
-	for true {
-		bufio.NewReader(os.Stdin).ReadString('\n')
+	for {
 	}
 }
