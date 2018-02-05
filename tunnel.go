@@ -10,18 +10,9 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-var tunnelConfigMap = map[string]([]interface{}){
-	"PostgreSQL": []interface{}{"10.0.0.11", 22, "root", "password", "127.0.0.1", 5432, "127.0.0.1", 5432},
-	"Redis     ": []interface{}{"10.0.0.11", 22, "root", "password", "127.0.0.1", 6379, "127.0.0.1", 6379},
-}
-
 type Endpoint struct {
 	Host string
 	Port int
-}
-
-func (endpoint *Endpoint) String() string {
-	return fmt.Sprintf("%s:%d", endpoint.Host, endpoint.Port)
 }
 
 type SSHtunnel struct {
@@ -29,6 +20,26 @@ type SSHtunnel struct {
 	Config *ssh.ClientConfig
 	Remote *Endpoint
 	Local  *Endpoint
+}
+
+type TunnelConfig struct {
+	GateHost     string
+	GatePort     int
+	GateUsername string
+	GatePassword string
+	DataHost     string
+	DataPort     int
+	LocalHost    string
+	LocalPort    int
+}
+
+var tunnelConfigMap = map[string]TunnelConfig{
+	"PostgreSQL": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 5432, "127.0.0.1", 5432},
+	"Redis     ": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 6379, "127.0.0.1", 6379},
+}
+
+func (endpoint *Endpoint) String() string {
+	return fmt.Sprintf("%s:%d", endpoint.Host, endpoint.Port)
 }
 
 func (tunnel *SSHtunnel) Start() error {
@@ -72,23 +83,23 @@ func (tunnel *SSHtunnel) forward(localConn net.Conn) {
 }
 
 func main() {
-	for flag, c := range tunnelConfigMap {
+	for flag, config := range tunnelConfigMap {
 		tunnel := &SSHtunnel{
-			&Endpoint{c[0].(string), c[1].(int)},
+			&Endpoint{config.GateHost, config.GatePort},
 			&ssh.ClientConfig{
-				User:            c[2].(string),
-				Auth:            []ssh.AuthMethod{ssh.Password(c[3].(string))},
+				User:            config.GateUsername,
+				Auth:            []ssh.AuthMethod{ssh.Password(config.GatePassword)},
 				HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error { return nil },
 			},
-			&Endpoint{c[4].(string), c[5].(int)},
-			&Endpoint{c[6].(string), c[7].(int)},
+			&Endpoint{config.DataHost, config.DataPort},
+			&Endpoint{config.LocalHost, config.LocalPort},
 		}
 		go func(flag string, tunnel *SSHtunnel) {
 			fmt.Printf("%s %s %s:%-5d => %s:%-5d\n", flag, tunnel.Server.Host, tunnel.Remote.Host, tunnel.Remote.Port, tunnel.Local.Host, tunnel.Local.Port)
 			fmt.Println(tunnel.Start())
 		}(flag, tunnel)
 	}
-	for {
+	for true {
 		bufio.NewReader(os.Stdin).ReadString('\n')
 	}
 }
