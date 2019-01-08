@@ -34,6 +34,7 @@ type TunnelConfig struct {
 var tunnelConfigMap = map[string]TunnelConfig{
 	"PostgreSQL": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 5432, "127.0.0.1", 5432},
 	"Redis     ": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 6379, "127.0.0.1", 6379},
+	"MySQL     ": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 3306, "127.0.0.1", 3306},
 }
 
 func (endpoint *Endpoint) String() string {
