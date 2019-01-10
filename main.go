@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -98,6 +99,5 @@ func main() {
 			fmt.Println(tunnel.Start())
 		}(flag, tunnel)
 	}
-	for {
-	}
+	time.Sleep(time.Hour * 24 * 7)
 }
