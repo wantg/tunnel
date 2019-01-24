@@ -1,1 +1,1 @@
-module tunnel
+module github.com/wantg/tunnel
