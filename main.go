@@ -73,6 +73,8 @@ func (tunnel *SSHtunnel) forward(localConn net.Conn) {
 
 	copyConn := func(writer, reader net.Conn) {
 		_, err := io.Copy(writer, reader)
+		writer.Close()
+		reader.Close()
 		if err != nil {
 			fmt.Printf("io.Copy error: %s", err)
 		}
