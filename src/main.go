@@ -1,17 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/ssh"
 )
+
+type key int
 
 type Endpoint struct {
 	Host string
@@ -42,11 +47,17 @@ func appPath(subPath *string) *string {
 	return &s
 }
 
+func randString() string {
+	rand.Seed(time.Now().UnixNano())
+	s := strconv.Itoa(rand.Int())
+	return s
+}
+
 func (endpoint *Endpoint) String() string {
 	return fmt.Sprintf("%s:%d", endpoint.Host, endpoint.Port)
 }
 
-func (tunnel *SSHtunnel) Start() error {
+func (tunnel *SSHtunnel) start() error {
 	listener, err := net.Listen("tcp", tunnel.Local.String())
 	if err != nil {
 		return err
@@ -54,15 +65,18 @@ func (tunnel *SSHtunnel) Start() error {
 	defer listener.Close()
 
 	for {
-		conn, err := listener.Accept()
+		localConn, err := listener.Accept()
 		if err != nil {
 			return err
 		}
-		go tunnel.forward(conn)
+		ctx0 := context.WithValue(context.Background(), key(1), randString())
+		go tunnel.forward(ctx0, localConn)
 	}
 }
 
-func (tunnel *SSHtunnel) forward(localConn net.Conn) {
+func (tunnel *SSHtunnel) forward(ctx0 context.Context, localConn net.Conn) {
+	fmt.Println()
+	fmt.Println("parent goroutine", ctx0.Value(key(1)).(string))
 	serverConn, err := ssh.Dial("tcp", tunnel.Server.String(), tunnel.Config)
 	if err != nil {
 		fmt.Printf("Server dial error: %s\n", err)
@@ -76,6 +90,8 @@ func (tunnel *SSHtunnel) forward(localConn net.Conn) {
 	}
 
 	copyConn := func(writer, reader net.Conn) {
+		ctx1 := context.WithValue(context.Background(), key(1), randString())
+		fmt.Println(" child goroutine", ctx1.Value(key(1)).(string))
 		_, err := io.Copy(writer, reader)
 		writer.Close()
 		reader.Close()
@@ -108,7 +124,7 @@ func main() {
 		}
 		go func(flag string, tunnel *SSHtunnel) {
 			fmt.Printf("%s %s %s:%-5d => %s:%-5d\n", flag, tunnel.Server.Host, tunnel.Remote.Host, tunnel.Remote.Port, tunnel.Local.Host, tunnel.Local.Port)
-			fmt.Println(tunnel.Start())
+			fmt.Println(tunnel.start())
 		}(flag, tunnel)
 	}
 	time.Sleep(time.Hour * 24 * 7)

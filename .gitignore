@@ -2,4 +2,3 @@
 .DS_Store
 go.sum
 bin
-config.json
