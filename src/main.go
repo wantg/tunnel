@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
+	"os"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -32,10 +36,10 @@ type TunnelConfig struct {
 	LocalPort    int
 }
 
-var tunnelConfigMap = map[string]TunnelConfig{
-	"PostgreSQL": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 5432, "127.0.0.1", 5432},
-	"Redis     ": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 6379, "127.0.0.1", 6379},
-	"MySQL     ": {"10.0.0.11", 22, "root", "password", "127.0.0.1", 3306, "127.0.0.1", 3306},
+func appPath(subPath *string) *string {
+	rootPath, _ := os.Executable()
+	s := filepath.Join(filepath.Dir(rootPath), *subPath)
+	return &s
 }
 
 func (endpoint *Endpoint) String() string {
@@ -86,7 +90,12 @@ func (tunnel *SSHtunnel) forward(localConn net.Conn) {
 }
 
 func main() {
-	for flag, config := range tunnelConfigMap {
+	var tunnelConfig = make(map[string]TunnelConfig)
+	configPath := "./config.json"
+	configBytes, _ := ioutil.ReadFile(*(appPath(&configPath)))
+	json.Unmarshal(configBytes, &tunnelConfig)
+
+	for flag, config := range tunnelConfig {
 		tunnel := &SSHtunnel{
 			&Endpoint{config.GateHost, config.GatePort},
 			&ssh.ClientConfig{

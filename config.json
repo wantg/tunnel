@@ -1,0 +1,32 @@
+{
+    "MySQL     ": {
+        "GateHost": "10.0.0.11",
+        "GatePort": 22,
+        "GateUsername": "root",
+        "GatePassword": "password",
+        "DataHost": "127.0.0.1",
+        "DataPort": 3306,
+        "LocalHost": "127.0.0.1",
+        "LocalPort": 3306
+    },
+    "PostgreSQL": {
+        "GateHost": "10.0.0.11",
+        "GatePort": 22,
+        "GateUsername": "root",
+        "GatePassword": "password",
+        "DataHost": "127.0.0.1",
+        "DataPort": 5432,
+        "LocalHost": "127.0.0.1",
+        "LocalPort": 5432
+    },
+    "Redis     ": {
+        "GateHost": "10.0.0.11",
+        "GatePort": 22,
+        "GateUsername": "root",
+        "GatePassword": "password",
+        "DataHost": "127.0.0.1",
+        "DataPort": 6379,
+        "LocalHost": "127.0.0.1",
+        "LocalPort": 6379
+    }
+}
