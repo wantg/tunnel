@@ -1,5 +1,5 @@
 {
-    "MySQL     ": {
+    "MySQL": {
         "gate": {
             "host": "10.0.0.11",
             "port": 22,
@@ -31,7 +31,7 @@
             "port": 5432
         }
     },
-    "Redis     ": {
+    "Redis": {
         "gate": {
             "host": "10.0.0.11",
             "port": 22,

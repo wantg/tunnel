@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"net"
 	"os"
@@ -23,14 +24,7 @@ type Endpoint struct {
 	Port int
 }
 
-type SSHtunnel struct {
-	Server *Endpoint
-	Config *ssh.ClientConfig
-	Remote *Endpoint
-	Local  *Endpoint
-}
-
-type TunnelConfig struct {
+type Tunnel struct {
 	Gate struct {
 		Endpoint
 		Username string
@@ -56,33 +50,38 @@ func (endpoint *Endpoint) String() string {
 	return fmt.Sprintf("%s:%d", endpoint.Host, endpoint.Port)
 }
 
-func (tunnel *SSHtunnel) start() error {
-	listener, err := net.Listen("tcp", tunnel.Local.String())
+func (tunnel *Tunnel) start() error {
+	listener, err := net.Listen("tcp", tunnel.Mirror.String())
 	if err != nil {
 		return err
 	}
 	defer listener.Close()
 
 	for {
-		localConn, err := listener.Accept()
+		mirrorConn, err := listener.Accept()
 		if err != nil {
 			return err
 		}
 		ctx0 := context.WithValue(context.Background(), key(1), randString())
-		go tunnel.forward(ctx0, localConn)
+		go tunnel.forward(ctx0, mirrorConn)
 	}
 }
 
-func (tunnel *SSHtunnel) forward(ctx0 context.Context, localConn net.Conn) {
+func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 	fmt.Println()
 	fmt.Println("parent goroutine", ctx0.Value(key(1)).(string))
-	serverConn, err := ssh.Dial("tcp", tunnel.Server.String(), tunnel.Config)
+	sshConfig := &ssh.ClientConfig{
+		User:            tunnel.Gate.Username,
+		Auth:            []ssh.AuthMethod{ssh.Password(tunnel.Gate.Password)},
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error { return nil },
+	}
+	sshServerConn, err := ssh.Dial("tcp", tunnel.Gate.String(), sshConfig)
 	if err != nil {
 		fmt.Printf("Server dial error: %s\n", err)
 		return
 	}
 
-	remoteConn, err := serverConn.Dial("tcp", tunnel.Remote.String())
+	sourceConn, err := sshServerConn.Dial("tcp", tunnel.Source.String())
 	if err != nil {
 		fmt.Printf("Remote dial error: %s\n", err)
 		return
@@ -94,37 +93,35 @@ func (tunnel *SSHtunnel) forward(ctx0 context.Context, localConn net.Conn) {
 		_, err := io.Copy(writer, reader)
 		writer.Close()
 		reader.Close()
-		serverConn.Close()
+		sshServerConn.Close()
 		if err != nil {
 			fmt.Printf("io.Copy error: %s", err)
 		}
 	}
 
-	go copyConn(localConn, remoteConn)
-	go copyConn(remoteConn, localConn)
+	go copyConn(mirrorConn, sourceConn)
+	go copyConn(sourceConn, mirrorConn)
 }
 
 func main() {
-	var tunnelConfig = make(map[string]TunnelConfig)
+	var tunnels = make(map[string]Tunnel)
 	configPath := "./config.json"
 	configBytes, _ := ioutil.ReadFile(*(appPath(&configPath)))
-	json.Unmarshal(configBytes, &tunnelConfig)
+	json.Unmarshal(configBytes, &tunnels)
 
-	for flag, config := range tunnelConfig {
-		tunnel := &SSHtunnel{
-			&Endpoint{config.Gate.Host, config.Gate.Port},
-			&ssh.ClientConfig{
-				User:            config.Gate.Username,
-				Auth:            []ssh.AuthMethod{ssh.Password(config.Gate.Password)},
-				HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error { return nil },
-			},
-			&Endpoint{config.Source.Host, config.Source.Port},
-			&Endpoint{config.Mirror.Host, config.Mirror.Port},
-		}
-		go func(flag string, tunnel *SSHtunnel) {
-			fmt.Printf("%s %s %s:%-5d => %s:%-5d\n", flag, tunnel.Server.Host, tunnel.Remote.Host, tunnel.Remote.Port, tunnel.Local.Host, tunnel.Local.Port)
+	var titleLength, GateTitleLength, SourceTitleLength float64 = 0, 0, 0
+	for title, tunnel := range tunnels {
+		titleLength = math.Max(titleLength, float64(len(title)))
+		GateTitleLength = math.Max(GateTitleLength, float64(len(tunnel.Gate.String())))
+		SourceTitleLength = math.Max(SourceTitleLength, float64(len(tunnel.Source.String())))
+	}
+	logFormat := fmt.Sprintf("%%-%ds %%-%ds %%-%ds => %%s\n", int(titleLength), int(GateTitleLength), int(SourceTitleLength))
+	// fmt.Println(logFormat)
+	for title, tunnel := range tunnels {
+		go func(title string, tunnel Tunnel) {
+			fmt.Printf(logFormat, title, tunnel.Gate.String(), tunnel.Source.String(), tunnel.Mirror.String())
 			fmt.Println(tunnel.start())
-		}(flag, tunnel)
+		}(title, tunnel)
 	}
 	time.Sleep(time.Hour * 24 * 7)
 }
