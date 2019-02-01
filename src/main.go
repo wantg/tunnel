@@ -47,7 +47,7 @@ func randString() string {
 }
 
 func (endpoint *Endpoint) String() string {
-	return fmt.Sprintf("%s:%d", endpoint.Host, endpoint.Port)
+	return endpoint.Host + ":" + strconv.Itoa(endpoint.Port)
 }
 
 func (tunnel *Tunnel) start() error {
@@ -80,13 +80,11 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 		fmt.Printf("Server dial error: %s\n", err)
 		return
 	}
-
 	sourceConn, err := sshServerConn.Dial("tcp", tunnel.Source.String())
 	if err != nil {
 		fmt.Printf("Remote dial error: %s\n", err)
 		return
 	}
-
 	copyConn := func(writer, reader net.Conn) {
 		ctx1 := context.WithValue(context.Background(), key(1), randString())
 		fmt.Println(" child goroutine", ctx1.Value(key(1)).(string))
@@ -98,7 +96,6 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 			fmt.Printf("io.Copy error: %s", err)
 		}
 	}
-
 	go copyConn(mirrorConn, sourceConn)
 	go copyConn(sourceConn, mirrorConn)
 }
