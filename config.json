@@ -1,32 +1,50 @@
 {
     "MySQL     ": {
-        "GateHost": "10.0.0.11",
-        "GatePort": 22,
-        "GateUsername": "root",
-        "GatePassword": "password",
-        "DataHost": "127.0.0.1",
-        "DataPort": 3306,
-        "LocalHost": "127.0.0.1",
-        "LocalPort": 3306
+        "gate": {
+            "host": "10.0.0.11",
+            "port": 22,
+            "username": "root",
+            "password": "password"
+        },
+        "source": {
+            "host": "127.0.0.1",
+            "port": 3306
+        },
+        "mirror": {
+            "host": "127.0.0.1",
+            "port": 3306
+        }
     },
     "PostgreSQL": {
-        "GateHost": "10.0.0.11",
-        "GatePort": 22,
-        "GateUsername": "root",
-        "GatePassword": "password",
-        "DataHost": "127.0.0.1",
-        "DataPort": 5432,
-        "LocalHost": "127.0.0.1",
-        "LocalPort": 5432
+        "gate": {
+            "host": "10.0.0.11",
+            "port": 22,
+            "username": "root",
+            "password": "password"
+        },
+        "source": {
+            "host": "127.0.0.1",
+            "port": 5432
+        },
+        "mirror": {
+            "host": "127.0.0.1",
+            "port": 5432
+        }
     },
     "Redis     ": {
-        "GateHost": "10.0.0.11",
-        "GatePort": 22,
-        "GateUsername": "root",
-        "GatePassword": "password",
-        "DataHost": "127.0.0.1",
-        "DataPort": 6379,
-        "LocalHost": "127.0.0.1",
-        "LocalPort": 6379
+        "gate": {
+            "host": "10.0.0.11",
+            "port": 22,
+            "username": "root",
+            "password": "password"
+        },
+        "source": {
+            "host": "127.0.0.1",
+            "port": 6379
+        },
+        "mirror": {
+            "host": "127.0.0.1",
+            "port": 6379
+        }
     }
 }

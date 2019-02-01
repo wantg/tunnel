@@ -31,14 +31,13 @@ type SSHtunnel struct {
 }
 
 type TunnelConfig struct {
-	GateHost     string
-	GatePort     int
-	GateUsername string
-	GatePassword string
-	DataHost     string
-	DataPort     int
-	LocalHost    string
-	LocalPort    int
+	Gate struct {
+		Endpoint
+		Username string
+		Password string
+	}
+	Source Endpoint
+	Mirror Endpoint
 }
 
 func appPath(subPath *string) *string {
@@ -113,14 +112,14 @@ func main() {
 
 	for flag, config := range tunnelConfig {
 		tunnel := &SSHtunnel{
-			&Endpoint{config.GateHost, config.GatePort},
+			&Endpoint{config.Gate.Host, config.Gate.Port},
 			&ssh.ClientConfig{
-				User:            config.GateUsername,
-				Auth:            []ssh.AuthMethod{ssh.Password(config.GatePassword)},
+				User:            config.Gate.Username,
+				Auth:            []ssh.AuthMethod{ssh.Password(config.Gate.Password)},
 				HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error { return nil },
 			},
-			&Endpoint{config.DataHost, config.DataPort},
-			&Endpoint{config.LocalHost, config.LocalPort},
+			&Endpoint{config.Source.Host, config.Source.Port},
+			&Endpoint{config.Mirror.Host, config.Mirror.Port},
 		}
 		go func(flag string, tunnel *SSHtunnel) {
 			fmt.Printf("%s %s %s:%-5d => %s:%-5d\n", flag, tunnel.Server.Host, tunnel.Remote.Host, tunnel.Remote.Port, tunnel.Local.Host, tunnel.Local.Port)
