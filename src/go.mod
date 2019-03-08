@@ -1,5 +1,7 @@
 module github.com/wantg/tunnel
 
-require golang.org/x/crypto v0.0.0-20190129210102-ccddf3741a0c
+go 1.12
 
-replace golang.org/x/crypto v0.0.0-20190129210102-ccddf3741a0c => github.com/golang/crypto v0.0.0-20190129210102-ccddf3741a0c
+require golang.org/x/crypto v0.0.0-20190228161510-8dd112bcdc25
+
+replace golang.org/x/crypto v0.0.0-20190228161510-8dd112bcdc25 => github.com/golang/crypto v0.0.0-20190228161510-8dd112bcdc25
