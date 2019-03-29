@@ -1,5 +1,6 @@
 {
     "MySQL": {
+        "enabled": true,
         "gate": {
             "host": "10.0.0.11",
             "port": 22,
@@ -16,6 +17,7 @@
         }
     },
     "PostgreSQL": {
+        "enabled": true,
         "gate": {
             "host": "10.0.0.11",
             "port": 22,
@@ -32,6 +34,7 @@
         }
     },
     "Redis": {
+        "enabled": false,
         "gate": {
             "host": "10.0.0.11",
             "port": 22,

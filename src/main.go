@@ -25,7 +25,8 @@ type Endpoint struct {
 }
 
 type Tunnel struct {
-	Gate struct {
+	Enabled bool
+	Gate    struct {
 		Endpoint
 		Username string
 		Password string
@@ -110,6 +111,9 @@ func main() {
 
 	var titleLength, GateTitleLength, SourceTitleLength float64 = 0, 0, 0
 	for title, tunnel := range tunnels {
+		if !tunnel.Enabled {
+			continue
+		}
 		titleLength = math.Max(titleLength, float64(len(title)))
 		GateTitleLength = math.Max(GateTitleLength, float64(len(tunnel.Gate.String())))
 		SourceTitleLength = math.Max(SourceTitleLength, float64(len(tunnel.Source.String())))
@@ -117,6 +121,9 @@ func main() {
 	logFormat := fmt.Sprintf("%%-%ds %%-%ds %%-%ds => %%s\n", int(titleLength), int(GateTitleLength), int(SourceTitleLength))
 	// fmt.Println(logFormat)
 	for title, tunnel := range tunnels {
+		if !tunnel.Enabled {
+			continue
+		}
 		go func(title string, tunnel Tunnel) {
 			fmt.Printf(logFormat, title, tunnel.Gate.String(), tunnel.Source.String(), tunnel.Mirror.String())
 			fmt.Println(tunnel.start())
