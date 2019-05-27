@@ -19,20 +19,21 @@ import (
 
 type key int
 
-type Endpoint struct {
+type endpoint struct {
 	Host string
 	Port int
 }
 
-type Tunnel struct {
+type tunnel struct {
+	Title   string
 	Enabled bool
 	Gate    struct {
-		Endpoint
+		endpoint
 		Username string
 		Password string
 	}
-	Source Endpoint
-	Mirror Endpoint
+	Source endpoint
+	Mirror endpoint
 }
 
 func appPath(subPath *string) *string {
@@ -47,11 +48,11 @@ func randString() string {
 	return s
 }
 
-func (endpoint *Endpoint) String() string {
+func (endpoint *endpoint) String() string {
 	return endpoint.Host + ":" + strconv.Itoa(endpoint.Port)
 }
 
-func (tunnel *Tunnel) start() error {
+func (tunnel *tunnel) start() error {
 	listener, err := net.Listen("tcp", tunnel.Mirror.String())
 	if err != nil {
 		return err
@@ -68,7 +69,7 @@ func (tunnel *Tunnel) start() error {
 	}
 }
 
-func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
+func (tunnel *tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 	fmt.Println()
 	// fmt.Println("parent goroutine", ctx0.Value(key(1)).(string))
 	sshConfig := &ssh.ClientConfig{
@@ -104,30 +105,28 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 }
 
 func main() {
-	var tunnels = make(map[string]Tunnel)
+	var tunnels = make([]tunnel, 0)
 	configPath := "./config.json"
 	configBytes, _ := ioutil.ReadFile(*(appPath(&configPath)))
 	json.Unmarshal(configBytes, &tunnels)
 
 	var titleLength, GateTitleLength, SourceTitleLength float64 = 0, 0, 0
-	for title, tunnel := range tunnels {
+	for _, tunnel := range tunnels {
 		if !tunnel.Enabled {
 			continue
 		}
-		titleLength = math.Max(titleLength, float64(len(title)))
+		titleLength = math.Max(titleLength, float64(len(tunnel.Title)))
 		GateTitleLength = math.Max(GateTitleLength, float64(len(tunnel.Gate.String())))
 		SourceTitleLength = math.Max(SourceTitleLength, float64(len(tunnel.Source.String())))
 	}
 	logFormat := fmt.Sprintf("%%-%ds %%-%ds %%-%ds => %%s\n", int(titleLength), int(GateTitleLength), int(SourceTitleLength))
 	// fmt.Println(logFormat)
-	for title, tunnel := range tunnels {
+	for _, tunnel := range tunnels {
 		if !tunnel.Enabled {
 			continue
 		}
-		go func(title string, tunnel Tunnel) {
-			fmt.Printf(logFormat, title, tunnel.Gate.String(), tunnel.Source.String(), tunnel.Mirror.String())
-			fmt.Println(tunnel.start())
-		}(title, tunnel)
+		fmt.Printf(logFormat, tunnel.Title, tunnel.Gate.String(), tunnel.Source.String(), tunnel.Mirror.String())
+		go tunnel.start()
 	}
 	time.Sleep(time.Hour * 24 * 7)
 }
