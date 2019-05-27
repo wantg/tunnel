@@ -24,7 +24,8 @@ type endpoint struct {
 	Port int
 }
 
-type tunnel struct {
+// Tunnel Tunnel
+type Tunnel struct {
 	Title   string
 	Enabled bool
 	Gate    struct {
@@ -52,7 +53,7 @@ func (endpoint *endpoint) String() string {
 	return endpoint.Host + ":" + strconv.Itoa(endpoint.Port)
 }
 
-func (tunnel *tunnel) start() error {
+func (tunnel *Tunnel) start() error {
 	listener, err := net.Listen("tcp", tunnel.Mirror.String())
 	if err != nil {
 		return err
@@ -69,7 +70,7 @@ func (tunnel *tunnel) start() error {
 	}
 }
 
-func (tunnel *tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
+func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 	fmt.Println()
 	// fmt.Println("parent goroutine", ctx0.Value(key(1)).(string))
 	sshConfig := &ssh.ClientConfig{
@@ -105,7 +106,7 @@ func (tunnel *tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 }
 
 func main() {
-	var tunnels = make([]tunnel, 0)
+	var tunnels = make([]Tunnel, 0)
 	configPath := "./config.json"
 	configBytes, _ := ioutil.ReadFile(*(appPath(&configPath)))
 	json.Unmarshal(configBytes, &tunnels)
@@ -126,7 +127,9 @@ func main() {
 			continue
 		}
 		fmt.Printf(logFormat, tunnel.Title, tunnel.Gate.String(), tunnel.Source.String(), tunnel.Mirror.String())
-		go tunnel.start()
+		go func(tunnel Tunnel) {
+			fmt.Println(tunnel.start())
+		}(tunnel)
 	}
 	time.Sleep(time.Hour * 24 * 7)
 }
