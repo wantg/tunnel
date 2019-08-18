@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,8 +11,10 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -30,8 +33,9 @@ type Tunnel struct {
 	Enabled bool
 	Gate    struct {
 		endpoint
-		Username string
-		Password string
+		Username     string
+		Password     string
+		IdentityFile string
 	}
 	Source endpoint
 	Mirror endpoint
@@ -47,6 +51,25 @@ func randString() string {
 	rand.Seed(time.Now().UnixNano())
 	s := strconv.Itoa(rand.Int())
 	return s
+}
+
+func getPublicKey(file string) ssh.AuthMethod {
+	p := file
+	if strings.HasPrefix(file, "~") {
+		usr, _ := user.Current()
+		userHomeDir := usr.HomeDir
+		p = userHomeDir + file[1:]
+	}
+	p, _ = filepath.Abs(p)
+	buffer, err := ioutil.ReadFile(p)
+	if err != nil {
+		return nil
+	}
+	key, err := ssh.ParsePrivateKey(buffer)
+	if err != nil {
+		return nil
+	}
+	return ssh.PublicKeys(key)
 }
 
 func (endpoint *endpoint) String() string {
@@ -73,9 +96,13 @@ func (tunnel *Tunnel) start() error {
 func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 	fmt.Println()
 	// fmt.Println("parent goroutine", ctx0.Value(key(1)).(string))
+	authMethod := ssh.Password(tunnel.Gate.Password)
+	if len(tunnel.Gate.IdentityFile) > 0 {
+		authMethod = getPublicKey(tunnel.Gate.IdentityFile)
+	}
 	sshConfig := &ssh.ClientConfig{
 		User:            tunnel.Gate.Username,
-		Auth:            []ssh.AuthMethod{ssh.Password(tunnel.Gate.Password)},
+		Auth:            []ssh.AuthMethod{authMethod},
 		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error { return nil },
 	}
 	sshServerConn, err := ssh.Dial("tcp", tunnel.Gate.String(), sshConfig)
@@ -105,11 +132,27 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 	go copyConn(sourceConn, mirrorConn)
 }
 
+func loadConfig() []byte {
+	configPtr := flag.String("c", "", "config file path")
+	flag.Parse()
+
+	configPath := strings.TrimSpace(*configPtr)
+	if len(configPath) == 0 {
+		panic("miss config file")
+	}
+
+	configPath, _ = filepath.Abs(configPath)
+	buf, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		panic(err)
+	}
+	return buf
+}
+
 func main() {
 	var tunnels = make([]Tunnel, 0)
-	configPath := "./config.json"
-	configBytes, _ := ioutil.ReadFile(*(appPath(&configPath)))
-	json.Unmarshal(configBytes, &tunnels)
+	bts := loadConfig()
+	json.Unmarshal(bts, &tunnels)
 
 	var titleLength, GateTitleLength, SourceTitleLength float64 = 0, 0, 0
 	for _, tunnel := range tunnels {
