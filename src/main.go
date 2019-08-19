@@ -132,26 +132,28 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 	go copyConn(sourceConn, mirrorConn)
 }
 
-func loadConfig() []byte {
+func loadConfig() ([]byte, error) {
 	configPtr := flag.String("c", "", "config file path")
 	flag.Parse()
-
 	configPath := strings.TrimSpace(*configPtr)
 	if len(configPath) == 0 {
-		panic("miss config file")
+		return nil, fmt.Errorf(`send config to me by "-c config.json"`)
 	}
-
 	configPath, _ = filepath.Abs(configPath)
 	buf, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return buf
+	return buf, nil
 }
 
 func main() {
+	bts, err := loadConfig()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	var tunnels = make([]Tunnel, 0)
-	bts := loadConfig()
 	json.Unmarshal(bts, &tunnels)
 
 	var titleLength, GateTitleLength, SourceTitleLength float64 = 0, 0, 0
