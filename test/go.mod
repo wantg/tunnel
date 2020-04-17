@@ -1,4 +1,4 @@
-module github.com/wantg/tunnel/test
+module github.com/clintwan/tunnel/test
 
 require (
 	github.com/gomodule/redigo v2.0.0+incompatible

@@ -1,7 +1,8 @@
-module github.com/wantg/tunnel
+module github.com/clintwan/tunnel
 
-go 1.12
+go 1.14
 
-require golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
-
-replace golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 => github.com/golang/crypto v0.0.0-20190701094942-4def268fd1a4
+require (
+	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
+	gopkg.in/yaml.v2 v2.2.8
+)

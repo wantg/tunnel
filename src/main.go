@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -18,6 +17,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh"
+	"gopkg.in/yaml.v2"
 )
 
 type key int
@@ -32,7 +32,7 @@ type Tunnel struct {
 	Title   string
 	Enabled bool
 	Gate    struct {
-		endpoint
+		endpoint     `yaml:",inline"`
 		Username     string
 		Password     string
 		IdentityFile string
@@ -154,7 +154,7 @@ func main() {
 		return
 	}
 	var tunnels = make([]Tunnel, 0)
-	json.Unmarshal(bts, &tunnels)
+	yaml.Unmarshal(bts, &tunnels)
 
 	var titleLength, GateTitleLength, SourceTitleLength float64 = 0, 0, 0
 	for _, tunnel := range tunnels {
