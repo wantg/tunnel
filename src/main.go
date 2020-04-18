@@ -137,7 +137,7 @@ func loadConfig() ([]byte, error) {
 	flag.Parse()
 	configPath := strings.TrimSpace(*configPtr)
 	if len(configPath) == 0 {
-		return nil, fmt.Errorf(`send config to me by "-c config.json"`)
+		return nil, fmt.Errorf(`send config to me by "-c config.yml"`)
 	}
 	configPath, _ = filepath.Abs(configPath)
 	buf, err := ioutil.ReadFile(configPath)
