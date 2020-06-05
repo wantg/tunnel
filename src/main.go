@@ -33,9 +33,9 @@ type Tunnel struct {
 	Enabled bool
 	Gate    struct {
 		endpoint     `yaml:",inline"`
-		Username     string
-		Password     string
-		IdentityFile string
+		Username     string `yaml:"username"`
+		Password     string `yaml:"password"`
+		IdentityFile string `yaml:"identityFile"`
 	}
 	Source endpoint
 	Mirror endpoint
