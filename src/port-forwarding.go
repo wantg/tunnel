@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	setForwarding("127.0.0.1:3389", "10.0.0.1:3389")
+	setForwarding("0.0.0.0:3389", "10.0.0.1:3389")
 }
 
 func setForwarding(listen, target string) {
