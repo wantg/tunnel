@@ -7,9 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
-	"math/rand"
 	"net"
-	"os"
 	"os/user"
 	"path/filepath"
 	"strconv"
@@ -19,8 +17,6 @@ import (
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v2"
 )
-
-type key int
 
 type endpoint struct {
 	Host string
@@ -41,16 +37,8 @@ type Tunnel struct {
 	Mirror endpoint
 }
 
-func appPath(subPath *string) *string {
-	rootPath, _ := os.Executable()
-	s := filepath.Join(filepath.Dir(rootPath), *subPath)
-	return &s
-}
-
-func randString() string {
-	rand.Seed(time.Now().UnixNano())
-	s := strconv.Itoa(rand.Int())
-	return s
+func (endpoint *endpoint) String() string {
+	return endpoint.Host + ":" + strconv.Itoa(endpoint.Port)
 }
 
 func getPublicKey(file string) ssh.AuthMethod {
@@ -72,10 +60,6 @@ func getPublicKey(file string) ssh.AuthMethod {
 	return ssh.PublicKeys(key)
 }
 
-func (endpoint *endpoint) String() string {
-	return endpoint.Host + ":" + strconv.Itoa(endpoint.Port)
-}
-
 func (tunnel *Tunnel) start() error {
 	listener, err := net.Listen("tcp", tunnel.Mirror.String())
 	if err != nil {
@@ -88,7 +72,7 @@ func (tunnel *Tunnel) start() error {
 		if err != nil {
 			return err
 		}
-		ctx0 := context.WithValue(context.Background(), key(1), randString())
+		ctx0 := context.WithValue(context.Background(), 1, time.Now().UnixNano())
 		go tunnel.forward(ctx0, mirrorConn)
 	}
 }
@@ -118,7 +102,7 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 		return
 	}
 	copyConn := func(writer, reader net.Conn) {
-		// ctx1 := context.WithValue(context.Background(), key(1), randString())
+		// ctx1 := context.WithValue(context.Background(), key(1), time.Now().UnixNano())
 		// fmt.Println(" child goroutine", ctx1.Value(key(1)).(string))
 		_, err := io.Copy(writer, reader)
 		writer.Close()
@@ -176,5 +160,6 @@ func main() {
 			fmt.Println(tunnel.start())
 		}(tunnel)
 	}
-	time.Sleep(time.Hour * 24 * 7)
+	for {
+	}
 }
