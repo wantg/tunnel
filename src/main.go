@@ -90,17 +90,17 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error { return nil },
 	}
 	sshServerConn, err := ssh.Dial("tcp", tunnel.Gate.String(), sshConfig)
+	if err != nil {
+		fmt.Println("Server dial error:", err)
+		return
+	}
 	fmt.Println("Open Gate", sshServerConn.RemoteAddr())
-	if err != nil {
-		fmt.Printf("Server dial error: %s\n", err)
-		return
-	}
 	sourceConn, err := sshServerConn.Dial("tcp", tunnel.Source.String())
-	fmt.Println("Connected", tunnel.Source.String())
 	if err != nil {
-		fmt.Printf("Remote dial error: %s\n", err)
+		fmt.Println("Remote dial error:", err)
 		return
 	}
+	fmt.Println("Connected", tunnel.Source.String())
 	copyConn := func(writer, reader net.Conn) {
 		// ctx1 := context.WithValue(context.Background(), key(1), time.Now().UnixNano())
 		// fmt.Println(" child goroutine", ctx1.Value(key(1)).(string))
@@ -109,7 +109,7 @@ func (tunnel *Tunnel) forward(ctx0 context.Context, mirrorConn net.Conn) {
 		reader.Close()
 		sshServerConn.Close()
 		if err != nil {
-			fmt.Printf("io.Copy error: %s", err)
+			fmt.Println("io.Copy error:", err)
 		}
 	}
 	go copyConn(mirrorConn, sourceConn)
